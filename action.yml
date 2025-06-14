@@ -1,86 +1,95 @@
-name: "Claude Max Code Action (OAuth Fork)"
-description: "Fork of Claude Code Action that supports OAuth authentication for Claude Max subscribers. General-purpose Claude agent for GitHub PRs and issues. Can answer questions and implement code changes."
+name: Claude Max Code Action (OAuth Fork)
+description: Fork of Claude Code Action that supports OAuth authentication for
+  Claude Max subscribers. General-purpose Claude agent for GitHub PRs and
+  issues. Can answer questions and implement code changes.
 branding:
-  icon: "at-sign"
-  color: "orange"
+  icon: at-sign
+  color: orange
 
 inputs:
   trigger_phrase:
-    description: "The trigger phrase to look for in comments or issue body"
+    description: The trigger phrase to look for in comments or issue body
     required: false
-    default: "@claude"
+    default: '@claude'
   assignee_trigger:
-    description: "The assignee username that triggers the action (e.g. @claude)"
+    description: The assignee username that triggers the action (e.g. @claude)
     required: false
 
   # Claude Code configuration
   model:
-    description: "Model to use (provider-specific format required for Bedrock/Vertex)"
+    description: Model to use (provider-specific format required for Bedrock/Vertex)
     required: false
   anthropic_model:
-    description: "DEPRECATED: Use 'model' instead. Model to use (provider-specific format required for Bedrock/Vertex)"
+    description: 'DEPRECATED: Use ''model'' instead. Model to use (provider-specific
+      format required for Bedrock/Vertex)'
     required: false
   allowed_tools:
-    description: "Additional tools for Claude to use (the base GitHub tools will always be included)"
+    description: Additional tools for Claude to use (the base GitHub tools will
+      always be included)
     required: false
-    default: ""
+    default: ''
   disallowed_tools:
-    description: "Tools that Claude should never use"
+    description: Tools that Claude should never use
     required: false
-    default: ""
+    default: ''
   custom_instructions:
-    description: "Additional custom instructions to include in the prompt for Claude"
+    description: Additional custom instructions to include in the prompt for Claude
     required: false
-    default: ""
+    default: ''
   direct_prompt:
-    description: "Direct instruction for Claude (bypasses normal trigger detection)"
+    description: Direct instruction for Claude (bypasses normal trigger detection)
     required: false
-    default: ""
+    default: ''
 
   # Auth configuration
   anthropic_api_key:
-    description: "Anthropic API key (required for direct API, not needed for Bedrock/Vertex/OAuth)"
+    description: Anthropic API key (required for direct API, not needed for
+      Bedrock/Vertex/OAuth)
     required: false
   github_token:
-    description: "GitHub token with repo and pull request permissions (optional if using GitHub App)"
+    description: GitHub token with repo and pull request permissions (optional if
+      using GitHub App)
     required: false
   use_bedrock:
-    description: "Use Amazon Bedrock with OIDC authentication instead of direct Anthropic API"
+    description: Use Amazon Bedrock with OIDC authentication instead of direct Anthropic API
     required: false
-    default: "false"
+    default: 'false'
   use_vertex:
-    description: "Use Google Vertex AI with OIDC authentication instead of direct Anthropic API"
+    description: Use Google Vertex AI with OIDC authentication instead of direct
+      Anthropic API
     required: false
-    default: "false"
+    default: 'false'
   use_oauth:
-    description: "Use Claude AI OAuth authentication instead of API key (for Claude Max subscribers)"
+    description: Use Claude AI OAuth authentication instead of API key (for Claude
+      Max subscribers)
     required: false
-    default: "false"
+    default: 'false'
   claude_access_token:
-    description: "Claude AI OAuth access token (required when use_oauth is true)"
+    description: Claude AI OAuth access token (required when use_oauth is true)
     required: false
-    default: ""
+    default: ''
   claude_refresh_token:
-    description: "Claude AI OAuth refresh token (required when use_oauth is true)"
+    description: Claude AI OAuth refresh token (required when use_oauth is true)
     required: false
-    default: ""
+    default: ''
   claude_expires_at:
-    description: "Claude AI OAuth token expiration timestamp (required when use_oauth is true)"
+    description: Claude AI OAuth token expiration timestamp (required when use_oauth
+      is true)
     required: false
-    default: ""
+    default: ''
 
   timeout_minutes:
-    description: "Timeout in minutes for execution"
+    description: Timeout in minutes for execution
     required: false
-    default: "30"
+    default: '30'
 
 outputs:
   execution_file:
-    description: "Path to the Claude Code execution output file"
+    description: Path to the Claude Code execution output file
     value: ${{ steps.claude-code.outputs.execution_file }}
 
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Install Bun
       uses: oven-sh/setup-bun@v2
@@ -110,7 +119,7 @@ runs:
     - name: Run Claude Code
       id: claude-code
       if: steps.prepare.outputs.contains_trigger == 'true'
-      uses: hasegama/claude-code-base-action@main
+      uses: Akira-Papa/claude-code-base-action@e2dc84cf17de323ff788e3bbcf2241d81cb1d9ed
       with:
         prompt_file: /tmp/claude-prompts/claude-prompt.txt
         allowed_tools: ${{ env.ALLOWED_TOOLS }}
@@ -149,7 +158,8 @@ runs:
         VERTEX_REGION_CLAUDE_3_7_SONNET: ${{ env.VERTEX_REGION_CLAUDE_3_7_SONNET }}
 
     - name: Update comment with job link
-      if: steps.prepare.outputs.contains_trigger == 'true' && steps.prepare.outputs.claude_comment_id && always()
+      if: steps.prepare.outputs.contains_trigger == 'true' &&
+        steps.prepare.outputs.claude_comment_id && always()
       shell: bash
       run: |
         bun run ${{ github.action_path }}/src/entrypoints/update-comment-link.ts
@@ -162,14 +172,19 @@ runs:
         GITHUB_EVENT_NAME: ${{ github.event_name }}
         TRIGGER_COMMENT_ID: ${{ github.event.comment.id }}
         CLAUDE_BRANCH: ${{ steps.prepare.outputs.CLAUDE_BRANCH }}
-        IS_PR: ${{ github.event.issue.pull_request != null || github.event_name == 'pull_request_review_comment' }}
+        IS_PR: ${{ github.event.issue.pull_request != null || github.event_name ==
+          'pull_request_review_comment' }}
         DEFAULT_BRANCH: ${{ steps.prepare.outputs.DEFAULT_BRANCH }}
         CLAUDE_SUCCESS: ${{ steps.claude-code.outputs.conclusion == 'success' }}
         OUTPUT_FILE: ${{ steps.claude-code.outputs.execution_file || '' }}
-        TRIGGER_USERNAME: ${{ github.event.comment.user.login || github.event.issue.user.login || github.event.pull_request.user.login || github.event.sender.login || github.triggering_actor || github.actor || '' }}
+        TRIGGER_USERNAME: ${{ github.event.comment.user.login ||
+          github.event.issue.user.login || github.event.pull_request.user.login
+          || github.event.sender.login || github.triggering_actor ||
+          github.actor || '' }}
 
     - name: Display Claude Code Report
-      if: steps.prepare.outputs.contains_trigger == 'true' && steps.claude-code.outputs.execution_file != ''
+      if: steps.prepare.outputs.contains_trigger == 'true' &&
+        steps.claude-code.outputs.execution_file != ''
       shell: bash
       run: |
         echo "## Claude Code Report" >> $GITHUB_STEP_SUMMARY
